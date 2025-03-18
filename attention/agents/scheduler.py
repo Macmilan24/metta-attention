@@ -37,17 +37,17 @@ class ParallelScheduler:
 
         print("\nStarting continuous agent execution... (Press Ctrl+C to stop)")
 
-        try:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                while True:  # Infinite loop
-                    futures = []
-                    for agent_id in self.agent_creators:
-                        agent = self.get_or_create_agent(agent_id)  # Use persistent agent
-                        if agent:
-                            futures.append(executor.submit(agent.run))
+        # try:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            while True:
+                futures = []
+                for agent_id in self.agent_creators:
+                    agent = self.get_or_create_agent(agent_id)  # Use persistent agent
+                    if agent:
+                        futures.append(executor.submit(agent.run))
 
-                    # Wait for all agents to complete before starting the next iteration
-                    concurrent.futures.wait(futures)
+                # Wait for all agents to complete before starting the next iteration
+                concurrent.futures.wait(futures)
 
-        except KeyboardInterrupt:
-            print("\nReceived interrupt signal. Stopping agents...")
+        # except KeyboardInterrupt:
+        #     print("\nReceived interrupt signal. Stopping agents...")

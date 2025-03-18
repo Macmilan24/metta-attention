@@ -1,33 +1,41 @@
-# Economic Attention Networks (ECAN)
+# Bug Fixes and Initial Code Exploration in Metta-Attention - `dev` Branch
 
-- This repository contains MeTTa code for [attention](https://github.com/singnet/attention) codebase port/re-implementation.
+As part of Task, I investigated the `dev` branch of the Metta-Attention repository to identify potential bugs and areas for code optimization. While I am still in the process of learning MeTTa and the intricacies of the ECAN implementation, I focused on addressing a critical runtime issue that I encountered when initially running the system.
 
-## Introduction
+## Identified Bug: Ctrl+C Interrupt Not Working as Expected
 
-- ECAN(Economic Attention Network) is a general term for the way that Attentional dynamics (centrally, the Competition for Attention) is carried out within OpenCogPrime.
+During initial testing, I observed that pressing `Ctrl+C` to stop the `attention/main.py` script did not terminate the program as expected. Instead of a clean shutdown, the system would print a "Stopping agents..." message but then immediately restart the agent execution loop, ignoring the interrupt signal and continuing to run.
 
-- Each Atom has an Attention Value attached to it. The process of updating these values is carried out according to nonlinear dynamical equations that are derived based on "artificial economics," utilizing two separate "currencies," one for `Short Term Importance (STI)` and one for `Long Term Importance (LTI)`.
+This behavior made it difficult to gracefully stop the system and indicated a bug in the interrupt handling.
 
-- One aspect of these equations is a form of `Hebbian Learning:` Atoms called `HebbianLinks` record which Atoms were habitually used together in the past, and when it occurred that Atom A's utilization appeared to play a role in causing Atom B's utilization. Then, these HebbianLinks are used to guide the flow of currency between Atoms: `B` gives `A` some money if `B` thinks that this money will help `A` to get used, and that this utilization will help `B` to get used.
+## Root Cause Analysis
 
+After examining the code, particularly the `attention/main.py` and `attention/agents/scheduler.py` files, I identified the root cause to be nested `try...except KeyboardInterrupt` blocks.
 
-- Very roughly speaking, these dynamical equations play a similar role to that played by `activation-spreading` in Neural Network AI systems.
+- **`attention/agents/scheduler.py` had an inner `try...except KeyboardInterrupt` block within the `run_continuously()` function.** This block was intended to catch `KeyboardInterrupt` signals.
 
-## Running the Code
+- **`attention/main.py` also had an _outer_ `try...except KeyboardInterrupt` block enclosing the main agent execution loop.**
 
-- Make sure to install MeTTa `v0.2.1` following the instruction on the [hyperon-experimental](https://github.com/trueagi-io/hyperon-experimental) repository.
-- For windows users, an alternative way of running MeTTa can be using the [metta-run](https://github.com/iCog-Labs-Dev/metta-prebuilt-binary) binary.
+The problem was that when `Ctrl+C` was pressed, the `KeyboardInterrupt` exception was being caught by the _inner_ `try...except` block in `scheduler.py` within the `run_continuously()` function. This inner handler would print the "Stopping agents..." message, but it would _not_ propagate the interrupt signal to the _outer_ loop in `main.py`. As a result, the `break` statement in the inner `except` block only exited the `run_continuously()` function, and the outer `while True` loop in `main.py` continued to iterate, restarting the agent execution.
 
+## Fix Implementation
 
-## Contributing 
+To resolve this bug and ensure proper Ctrl+C interrupt handling, I implemented the following changes:
 
-Before you start contributing to this repository, make sure to read the [CONTRIBUTING.md](https://github.com/iCog-Labs-Dev/metta-attention/blob/main/.github/CONTRIBUTING.md) file from our repository
+**1. Modification to `attention/agents/scheduler.py`:**
 
-## References
+- **Removed the `try...except KeyboardInterrupt` block from the `run_continuously()` function entirely.** The interrupt handling in the scheduler was redundant and was interfering with the intended behavior in `main.py`.
 
-- Original [paper](https://www.researchgate.net/publication/239925326_Economic_Attention_Networks_Associative_Memory_and_Resource_Allocation_for_General_Intelligence)
+**2. Modification to `attention/main.py` (Already Implemented - Ensured Correct Structure):**
 
-- [Economic attention allocation](https://wiki.opencog.org/w/Economic_attention_allocation_(Obsolete)) wiki page 
+- Ensured that the `try...except KeyboardInterrupt` block in `main.py` **encloses the _entire_ `while True` loop** that runs `scheduler.run_continuously()`. This ensures that when a `KeyboardInterrupt` is raised and caught, the `break` statement will exit the _outer_ loop and terminate the program.
 
-- C++ implementation of [attention](https://github.com/singnet/attention) codebase
+## Verification
 
+After applying these changes, pressing `Ctrl+C` now correctly terminates the `attention/main.py` script, resulting in a clean shutdown and the "System stopped. Goodbye!" message, without restarting the agent execution loop.
+
+## Further Exploration
+
+While addressing this runtime bug, I also began exploring the codebase to understand its structure and identify potential areas for deeper bug fixes or optimizations. However, due to my current limited familiarity with MeTTa and the specifics of the ECAN implementation, further in-depth analysis and optimization will require more focused study and experimentation with the system.
+
+---

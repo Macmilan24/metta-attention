@@ -29,18 +29,15 @@ def main():
     
 
     print("\nAgent System Ready!")
-
-    while True:
-        try:
+        
+    try:
+        while True:
             print("\nRunning agents in continuous mode. Press Ctrl+C to stop.")
             scheduler.run_continuously()
-
-        except KeyboardInterrupt:
-            print("\nReceived interrupt signal. Stopping system...")
-            break
-        except Exception as e:
-            print(f"\nError: {e}")
-            break
+    except KeyboardInterrupt:
+        print("\nReceived interrupt signal. Stopping system...")
+    except Exception as e:
+        print(f"\nError: {e}")
 
     print("System stopped. Goodbye!")
 
