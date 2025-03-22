@@ -1,4 +1,4 @@
-# Bug Fixes and Initial Code Exploration in Metta-Attention - `dev` Branch
+# Bug Fixes and Initial Code Exploration in Metta-Attention - `dev`
 
 As part of Task, I investigated the `dev` branch of the Metta-Attention repository to identify potential bugs and areas for code optimization. While I am still in the process of learning MeTTa and the intricacies of the ECAN implementation, I focused on addressing a critical runtime issue that I encountered when initially running the system.
 
